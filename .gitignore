@@ -1,0 +1,6 @@
+.idea/
+vendor/*
+package-lock.json
+composer.lock
+composer.phar
+test/.*
