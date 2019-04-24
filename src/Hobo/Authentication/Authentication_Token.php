@@ -9,14 +9,14 @@ class Authentication_Token
      *
      * @var string
      */
-    protected $key;
+    protected $_key;
 
     /**
      * The secret
      *
      * @var string
      */
-    protected $secret;
+    protected $_secret;
 
     /**
      * Create a new instance of Token
@@ -28,8 +28,8 @@ class Authentication_Token
      */
     public function __construct($key, $secret)
     {
-        $this->key = $key;
-        $this->secret = $secret;
+        $this->_key = $key;
+        $this->_secret = $secret;
     }
 
     /**
@@ -39,7 +39,7 @@ class Authentication_Token
      */
     public function get_key()
     {
-        return $this->key;
+        return $this->_key;
     }
 
     /**
@@ -49,7 +49,7 @@ class Authentication_Token
      */
     public function get_secret()
     {
-        return $this->secret;
+        return $this->_secret;
     }
 
 }

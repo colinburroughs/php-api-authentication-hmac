@@ -12,15 +12,15 @@ class Authentication_Request
     CONST AUTH_TIMESTAMP = 'auth_timestamp';
     CONST AUTH_SIGNATURE = 'auth_signature';
 
-    protected $query_params = array();
-    private $method;
-    private $path;
+    protected $_query_params = array();
+    private $_method;
+    private $_path;
 
-    protected $auth_params = array(
-        'auth_version' => NULL,
-        'auth_key' => NULL,
-        'auth_timestamp' => NULL,
-        'auth_signature' => NULL
+    protected $_auth_params = array(
+        self::AUTH_VERSION => NULL,
+        self::AUTH_KEY => NULL,
+        self::AUTH_TIMESTAMP => NULL,
+        self::AUTH_SIGNATURE => NULL
     );
 
     /**
@@ -34,12 +34,12 @@ class Authentication_Request
      */
     public function __construct($method, $path, array $params)
     {
-        $this->method = strtoupper($method);
-        $this->path = $path;
+        $this->_method = strtoupper($method);
+        $this->_path = $path;
         $prefix_length = strlen(self::AUTH_PREFIX);
         foreach ($params as $k => $v) {
             $k = strtolower($k);
-            substr($k, 0, $prefix_length) === self::AUTH_PREFIX ? $this->auth_params[$k] = $v : $this->query_params[$k] = $v;
+            substr($k, 0, $prefix_length) === self::AUTH_PREFIX ? $this->_auth_params[$k] = $v : $this->_query_params[$k] = $v;
         }
     }
 
@@ -52,14 +52,14 @@ class Authentication_Request
      */
     public function sign_request(Authentication_Token $token): array
     {
-        $this->auth_params = array(
+        $this->_auth_params = array(
             self::AUTH_VERSION => self::API_VERSION,
             self::AUTH_KEY => $token->get_key(),
             self::AUTH_TIMESTAMP => time()
         );
 
-        $this->auth_params[self::AUTH_SIGNATURE] = $this->get_signature($token);
-        return $this->auth_params;
+        $this->_auth_params[self::AUTH_SIGNATURE] = $this->get_signature($token);
+        return $this->_auth_params;
     }
 
     /**
@@ -70,7 +70,7 @@ class Authentication_Request
     protected function parameter_string(): string
     {
         $array = array();
-        $params = array_merge($this->auth_params, $this->query_params);
+        $params = array_merge($this->_auth_params, $this->_query_params);
         foreach ($params as $k => $v) {
             $array[strtolower($k)] = $v;
         }
@@ -87,7 +87,7 @@ class Authentication_Request
      */
     protected function get_signature(Authentication_Token $token): string
     {
-        $string_to_sign = implode("\n", array($this->method, $this->path, $this->parameter_string()));
+        $string_to_sign = implode("\n", array($this->_method, $this->_path, $this->parameter_string()));
         return hash_hmac(self::HMAC_ALGORITHM, $string_to_sign, $token->get_secret());
     }
 
@@ -100,7 +100,7 @@ class Authentication_Request
      */
     public function authenticate_request(Authentication_Token $token, $timestamp_lifespan = 600)
     {
-        if ($this->auth_params[self::AUTH_KEY] === $token->get_key()) {
+        if ($this->_auth_params[self::AUTH_KEY] === $token->get_key()) {
             return $this->authenticate_by_token($token, $timestamp_lifespan);
         }
 
@@ -131,7 +131,7 @@ class Authentication_Request
      */
     protected function validate_version(): bool
     {
-        if ($this->auth_params[self::AUTH_VERSION] !== self::API_VERSION) {
+        if ($this->_auth_params[self::AUTH_VERSION] !== self::API_VERSION) {
             throw new Authentication_Exception('The ' . self::AUTH_VERSION . ' is incorrect');
         }
         return TRUE;
@@ -148,7 +148,7 @@ class Authentication_Request
         if ($timestamp_grace == 0) {
             return TRUE;
         }
-        $difference = $this->auth_params[self::AUTH_TIMESTAMP] - time();
+        $difference = $this->_auth_params[self::AUTH_TIMESTAMP] - time();
         if ($difference >= $timestamp_grace) {
             throw new Authentication_Exception('The ' . self::AUTH_TIMESTAMP . ' is invalid');
         }
@@ -163,7 +163,7 @@ class Authentication_Request
      */
     protected function validate_signature(Authentication_Token $token): bool
     {
-        if ($this->auth_params[self::AUTH_SIGNATURE] !== $this->get_signature($token)) {
+        if ($this->_auth_params[self::AUTH_SIGNATURE] !== $this->get_signature($token)) {
             throw new Authentication_Exception('The ' . self::AUTH_SIGNATURE . ' is incorrect');
         }
         return TRUE;
